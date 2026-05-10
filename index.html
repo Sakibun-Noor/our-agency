@@ -388,6 +388,9 @@
 <script>
   (function(){
     if(typeof Lenis === 'undefined') return;
+    // Skip on mobile / coarse pointers — native scroll feels better
+    const isMobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+    if(isMobile) return;
     const lenis = new Lenis({
       duration: 1.4,
       easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),

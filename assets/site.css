@@ -609,8 +609,9 @@ body::before{
 
 /* === Responsive === */
 @media(max-width:1100px){
-  .hero{padding-top:120px;padding-bottom:90px;min-height:90vh}
-  .hero-card{max-width:640px}
+  .hero{padding-top:140px;padding-bottom:120px;min-height:92vh}
+  .hero h1{font-size:clamp(46px,8vw,96px)}
+  .hero-content{max-width:880px}
 }
 @media(max-width:900px){
   .nav{top:12px}
@@ -624,40 +625,109 @@ body::before{
   .nav-links a.active::after{display:none}
   .nav-burger{display:block}
   .nav-cta{padding:8px 14px;font-size:12px}
+  .nav-theme{width:32px;height:32px}
+  .nav-theme svg{width:14px;height:14px}
+  .hero{padding-top:120px;padding-bottom:100px;min-height:90vh}
+  .hero h1{font-size:clamp(42px,8.5vw,80px);max-width:18ch}
+  .hero-eyebrow{font-size:10px;padding:7px 14px}
+  .hero-content{max-width:720px}
+  /* Service intro — non-sticky, smaller */
+  .svc-intro{padding:24px}
+  .svc-intro h3{font-size:26px}
+  .svc-intro p:last-of-type{display:none} /* hide "Hover the cards" — touch device */
 }
 @media(max-width:760px){
-  .hero{padding-top:100px;padding-bottom:80px;min-height:88vh}
-  .hero-card{padding:22px 20px;border-radius:20px}
-  .hero h1{font-size:clamp(38px,10vw,64px);margin-top:18px}
-  .hero-sub{margin-top:18px;font-size:14.5px}
-  .hero-cta{margin-top:24px;flex-direction:column;align-items:stretch;width:100%}
+  .hero{padding-top:110px;padding-bottom:90px;min-height:auto}
+  .hero h1{font-size:clamp(36px,9.5vw,60px);margin-top:22px;max-width:16ch;letter-spacing:-0.03em}
+  .hero-sub{margin-top:18px;font-size:14.5px;max-width:90%}
+  .hero-cta{margin-top:32px;gap:10px;flex-direction:column;align-items:stretch;width:100%;max-width:340px}
   .hero-cta .btn{justify-content:center}
-  .hero-video-overlay{
-    background:
-      linear-gradient(180deg,var(--hero-overlay-1) 0%,var(--hero-overlay-2) 50%,var(--hero-overlay-bot) 100%);
+  .hero-cta .btn-ghost{padding:12px 8px}
+  .hero-eyebrow{font-size:10px;letter-spacing:.16em;padding:6px 12px}
+  .hero-anim canvas{
+    -webkit-mask-image:radial-gradient(ellipse 110% 70% at 50% 50%,#000 50%,rgba(0,0,0,.55) 75%,rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(ellipse 110% 70% at 50% 50%,#000 50%,rgba(0,0,0,.55) 75%,rgba(0,0,0,0) 100%);
   }
   .hero-meta{display:none}
+  .shell{padding:0 18px}
   .marquee .logo{font-size:20px}
   .marquee-track{gap:48px;animation-duration:28s}
   .sec-head{margin-bottom:40px;gap:18px}
+  /* Service cards — single column, full width, smaller thumb */
+  .services{gap:18px}
+  .svc-thumb{aspect-ratio:16/9}
+  .svc.tall .svc-thumb{aspect-ratio:16/10}
+  .svc-body{padding:22px 22px 26px}
+  .svc-title{font-size:24px}
+  .svc-desc{font-size:13.5px;margin-top:14px}
+  .svc-tags{margin-top:18px}
+  .svc-arrow{top:18px;right:18px;width:32px;height:32px;font-size:11px}
+  /* Work */
+  .work{gap:16px}
   .work-meta{padding:18px 20px;flex-direction:column;align-items:flex-start;gap:8px}
   .work-meta .yr{align-self:flex-end}
+  .work-meta .left h3{font-size:19px}
+  /* Object section */
   .obj-section{padding:80px 0}
   .obj-grid{gap:48px}
-  .specs{grid-template-columns:1fr}
-  .specs .v{font-size:30px}
-  .counters .num{font-size:48px}
-  .counters .cell{padding:24px}
+  .obj-visual{aspect-ratio:1/1}
+  .obj-copy h2{font-size:clamp(32px,7vw,48px)}
+  .specs{grid-template-columns:1fr 1fr}
+  .specs .v{font-size:26px}
+  .specs .cell{padding:18px}
+  .counters .num{font-size:44px}
+  .counters .cell{padding:22px}
+  /* FAQ */
+  .faq{gap:32px}
+  .faq-q h4{font-size:18px}
+  .faq-q .plus{width:28px;height:28px}
+  /* Footer */
+  .footer{padding:80px 0 32px}
   .foot-form{min-width:0;width:100%}
-  .foot-headline{font-size:clamp(48px,14vw,96px)}
-  .foot-row{flex-direction:column;align-items:stretch}
+  .foot-headline{font-size:clamp(44px,14vw,80px)}
+  .foot-row{flex-direction:column;align-items:stretch;gap:24px;margin-top:40px}
   .foot-cols{grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
   .foot-bottom{font-size:10px;flex-direction:column;align-items:flex-start;gap:10px}
+  /* Tweaks panel */
+  .tweaks-panel{left:8px;right:8px;width:auto;bottom:8px}
+}
+@media(max-width:540px){
+  .hero h1{font-size:clamp(34px,10.5vw,52px)}
+  .hero-eyebrow{font-size:9.5px}
+  .specs{grid-template-columns:1fr}
+  .counters{grid-template-columns:1fr 1fr}
+  .foot-cols{grid-template-columns:1fr 1fr}
 }
 @media(max-width:480px){
+  .nav-inner{gap:10px;padding:6px 8px 6px 12px}
   .nav-cta span{display:none}
-  .nav-cta::after{content:'→'}
-  .hero h1{font-size:clamp(34px,11vw,56px);line-height:1}
-  .svc{padding:22px}
-  .svc-arrow{width:30px;height:30px;top:18px;right:18px}
+  .nav-cta::after{content:'→';font-size:14px}
+  .nav-logo span:last-child{display:none} /* hide "Digital Harbor" text, keep mark */
+  .hero{padding-top:100px;padding-bottom:80px}
+  .hero h1{font-size:clamp(32px,11vw,48px);line-height:1.02}
+  .hero-content{padding:0 4px}
+  .svc-body{padding:20px 18px 22px}
+  .svc-title{font-size:22px;line-height:1.1}
+  .svc-arrow{width:28px;height:28px;top:14px;right:14px;font-size:10px}
+  .svc-num{font-size:10px}
+  .marquee .logo{font-size:17px;gap:10px}
+  .marquee-track{gap:36px;animation-duration:24s}
+  .obj-visual .corner{font-size:9px;padding:10px 12px}
+  .counters .num{font-size:38px}
+  .counters .cell{padding:18px}
+  .foot-form{padding:4px 4px 4px 16px}
+  .foot-form input{font-size:13px;padding:10px 0}
+  .foot-form button{padding:9px 16px;font-size:12px}
+}
+
+/* iOS-safe height for hero (avoid 100vh > viewport bug) */
+@supports(height: 100dvh){
+  .hero{min-height:100dvh}
+  @media(max-width:760px){.hero{min-height:88dvh}}
+  @media(max-width:480px){.hero{min-height:84dvh}}
+}
+
+/* Disable Lenis smooth scroll on mobile (use native momentum scroll) */
+@media(max-width:760px){
+  html.lenis,html.lenis body{overflow:auto !important;height:auto !important}
 }
