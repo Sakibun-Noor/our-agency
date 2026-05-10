@@ -30,54 +30,11 @@
       <div class="contact-grid">
 
         <div class="reveal">
-          <!-- Hidden iframe pre-warms InfinityFree JS-challenge cookie so form POST gets through -->
-          <iframe src="https://myagency.page.gd/warm.html" style="position:absolute;width:0;height:0;border:0;visibility:hidden" id="warmFrame" loading="eager" tabindex="-1" aria-hidden="true"></iframe>
-
-          <form class="contact-form" id="contactForm" method="POST" action="https://myagency.page.gd/api/submit.php">
-            <div class="field">
-              <label for="name">/ Name</label>
-              <input type="text" id="name" name="name" placeholder="Your name" required>
-            </div>
-            <div class="field">
-              <label for="email">/ Email</label>
-              <input type="email" id="email" name="email" placeholder="you@company.com" required>
-            </div>
-            <div class="field">
-              <label for="company">/ Company</label>
-              <input type="text" id="company" name="company" placeholder="Company name">
-            </div>
-            <div class="field">
-              <label for="budget">/ Budget</label>
-              <div class="budget-row" id="budgetRow">
-                <button type="button" class="budget-chip" data-val="40-90">$40–90K</button>
-                <button type="button" class="budget-chip active" data-val="90-180">$90–180K</button>
-                <button type="button" class="budget-chip" data-val="180-400">$180–400K</button>
-                <button type="button" class="budget-chip" data-val="400+">$400K+</button>
-              </div>
-              <input type="hidden" name="budget" id="budgetVal" value="90-180">
-            </div>
-            <div class="field">
-              <label for="scope">/ Scope</label>
-              <select id="scope" name="scope">
-                <option value="brand">Brand &amp; identity</option>
-                <option value="product">Product &amp; UX</option>
-                <option value="engineering">Engineering build</option>
-                <option value="growth">Growth &amp; CRO</option>
-                <option value="retainer">Quarterly retainer</option>
-                <option value="other">Other / unsure</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="message">/ Brief</label>
-              <textarea id="message" name="message" placeholder="What are you building? What's the deadline? What's keeping you up?" required></textarea>
-            </div>
-            <!-- honeypot -->
-            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true">
-            <div id="formStatus" style="display:none;font-size:13px;font-family:var(--mono);letter-spacing:.06em"></div>
-            <button type="submit" class="btn btn-primary magnet" style="margin-top:12px;align-self:flex-start">
-              Send brief <span class="arrow">→</span>
-            </button>
-          </form>
+          <!-- Form is loaded same-origin from InfinityFree so JS-challenge cookies travel correctly. -->
+          <iframe id="contactFrame"
+                  src="https://myagency.page.gd/form.php"
+                  style="width:100%;border:0;display:block;background:transparent;min-height:680px"
+                  title="Contact form"></iframe>
         </div>
 
         <div class="reveal">
@@ -134,52 +91,24 @@
 <script src="assets/layout.js"></script>
 <script src="assets/site.js"></script>
 <script>
-  // Sync budget chip value into hidden input
-  document.querySelectorAll('#budgetRow .budget-chip').forEach(c=>{
-    c.addEventListener('click',()=>{
-      document.getElementById('budgetVal').value = c.dataset.val;
-    });
+  // Iframe contact form: auto-resize + theme sync
+  const frame = document.getElementById('contactFrame');
+  function pushTheme(){
+    if (!frame || !frame.contentWindow) return;
+    const t = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    try { frame.contentWindow.postMessage({ theme: t }, '*'); } catch(e){}
+  }
+  // Re-sync theme when toggle changes
+  new MutationObserver(pushTheme).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+  frame && frame.addEventListener('load', () => {
+    pushTheme();
+    // Append theme query as initial fallback if postMessage timing missed it
   });
-
-  // Show banner from redirect query (?sent=1 or ?err=1)
-  const params = new URLSearchParams(location.search);
-  if (params.get('sent') === '1') {
-    const statusEl = document.getElementById('formStatus');
-    statusEl.style.display = 'block';
-    statusEl.style.color = '#22c55e';
-    statusEl.textContent = '✓ SENT — WE\'LL BE IN TOUCH';
-    document.getElementById('contactForm').reset();
-    document.getElementById('budgetVal').value = '90-180';
-  }
-  if (params.get('err') === '1') {
-    const statusEl = document.getElementById('formStatus');
-    statusEl.style.display = 'block';
-    statusEl.style.color = '#ff4d6d';
-    statusEl.textContent = 'FAILED — TRY AGAIN OR EMAIL DIRECTLY';
-  }
-
-  // Hold form submit until the warmer iframe has loaded (gives JS-challenge cookie time to set).
-  let warmed = false;
-  const warmFrame = document.getElementById('warmFrame');
-  warmFrame && warmFrame.addEventListener('load', () => { warmed = true; });
-  // Hard timeout fallback (4s) — submit anyway if iframe never fires load
-  setTimeout(() => { warmed = true; }, 4000);
-
-  document.getElementById('contactForm').addEventListener('submit', (e) => {
-    if (!warmed) {
-      e.preventDefault();
-      const statusEl = document.getElementById('formStatus');
-      statusEl.style.display = 'block';
-      statusEl.style.color = 'var(--muted)';
-      statusEl.textContent = 'CONNECTING TO SERVER…';
-      const tryAgain = () => {
-        if (warmed) {
-          e.target.submit();
-        } else {
-          setTimeout(tryAgain, 250);
-        }
-      };
-      setTimeout(tryAgain, 250);
+  // Listen for height/sent events from iframe
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'iframe-height' && typeof e.data.height === 'number') {
+      frame.style.height = (e.data.height + 16) + 'px';
     }
   });
 </script>

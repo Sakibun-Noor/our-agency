@@ -28,8 +28,15 @@ if ($raw && str_starts_with(trim($raw), '{')) {
 // Where to redirect form-POST submissions back to (set in config)
 $returnUrl = rtrim(($cfg['site']['return_url'] ?? 'https://our-agency-tau.vercel.app/contact.html'), '/');
 
+// If submission came from the embedded iframe form, redirect inside the iframe (same-origin).
+$isIframe = !empty($_POST['from_iframe']);
+if ($isIframe) {
+    $returnUrl = '/form.php';
+}
+
 function form_redirect(string $url, bool $ok): void {
-    header('Location: ' . $url . ($ok ? '?sent=1' : '?err=1') . '#contact');
+    $sep = (strpos($url, '?') !== false) ? '&' : '?';
+    header('Location: ' . $url . $sep . ($ok ? 'sent=1' : 'err=1') . '#top');
     exit;
 }
 
