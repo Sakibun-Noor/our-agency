@@ -21,6 +21,7 @@ function admin_head(string $title): void {
     <?php if ($u): ?>
       <nav class="ah-nav">
         <a href="/admin/" class="<?= basename($_SERVER['PHP_SELF'])==='index.php'?'active':'' ?>">Inbox</a>
+        <a href="/admin/content.php" class="<?= basename($_SERVER['PHP_SELF'])==='content.php'?'active':'' ?>">Content</a>
         <?php if ($u['role']==='admin'): ?>
           <a href="/admin/users.php" class="<?= basename($_SERVER['PHP_SELF'])==='users.php'?'active':'' ?>">Users</a>
         <?php endif; ?>

@@ -27,4 +27,11 @@ CREATE TABLE IF NOT EXISTS messages (
     INDEX idx_created (created_at DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS content (
+    k          VARCHAR(120) NOT NULL PRIMARY KEY,
+    v          LONGTEXT NOT NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by INT UNSIGNED NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Seed first admin via /admin/setup.php (only runs when users table is empty).
