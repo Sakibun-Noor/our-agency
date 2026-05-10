@@ -30,7 +30,7 @@
       <div class="contact-grid">
 
         <div class="reveal">
-          <form class="contact-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Sent ✓ — we\\'ll be in touch';this.querySelector('button').disabled=true">
+          <form class="contact-form" id="contactForm" novalidate>
             <div class="field">
               <label for="name">/ Name</label>
               <input type="text" id="name" name="name" placeholder="Your name" required>
@@ -66,8 +66,11 @@
             </div>
             <div class="field">
               <label for="message">/ Brief</label>
-              <textarea id="message" name="message" placeholder="What are you building? What's the deadline? What's keeping you up?"></textarea>
+              <textarea id="message" name="message" placeholder="What are you building? What's the deadline? What's keeping you up?" required></textarea>
             </div>
+            <!-- honeypot -->
+            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true">
+            <div id="formStatus" style="display:none;font-size:13px;font-family:var(--mono);letter-spacing:.06em"></div>
             <button type="submit" class="btn btn-primary magnet" style="margin-top:12px;align-self:flex-start">
               Send brief <span class="arrow">→</span>
             </button>
@@ -133,6 +136,49 @@
     c.addEventListener('click',()=>{
       document.getElementById('budgetVal').value = c.dataset.val;
     });
+  });
+
+  // Submit contact form to PHP backend
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('formStatus');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--muted)';
+    statusEl.textContent = 'SENDING…';
+
+    const data = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      company: form.company.value.trim(),
+      budget: form.budget.value,
+      scope: form.scope.value,
+      message: form.message.value.trim(),
+      website: form.website.value, // honeypot
+    };
+
+    try{
+      const res = await fetch('api/submit.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if(res.ok && json.ok){
+        statusEl.style.color = '#22c55e';
+        statusEl.textContent = '✓ SENT — WE\'LL BE IN TOUCH';
+        form.reset();
+        document.getElementById('budgetVal').value = '90-180';
+      } else {
+        throw new Error(json.error || 'Failed');
+      }
+    } catch(err){
+      statusEl.style.color = '#ff4d6d';
+      statusEl.textContent = 'FAILED — ' + (err.message || 'TRY AGAIN');
+      btn.disabled = false;
+    }
   });
 </script>
 </body>
