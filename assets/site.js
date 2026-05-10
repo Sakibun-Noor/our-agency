@@ -76,18 +76,20 @@
   });
 })();
 
-/* === Hardware sequence canvas === */
+/* === Hardware sequence canvas (smooth: preload all + sub-pixel timing) === */
 window.HardwareSequence = function(opts){
   const canvas = opts.canvas;
   const total = opts.total || 240;
-  const path = opts.path || 'frames/'; // ../frames/ for nested pages
+  const path = opts.path || 'frames/';
   const fps = opts.fps || 30;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', {alpha:true, desynchronized:true});
   const dpr = Math.min(2, window.devicePixelRatio||1);
   const imgs = new Array(total);
   let loaded = 0;
+  let ready = false;
   let current = 0;
-  let last = 0;
+  let acc = 0;
+  let lastT = 0;
   let speed = 1;
   let running = true;
 
@@ -97,16 +99,16 @@ window.HardwareSequence = function(opts){
     const r = canvas.getBoundingClientRect();
     canvas.width = Math.round(r.width*dpr);
     canvas.height = Math.round(r.height*dpr);
+    if(imgs[current]) drawIdx(current);
   }
   resize();
   new ResizeObserver(resize).observe(canvas);
 
   function drawIdx(i){
     const img = imgs[i];
-    if(!img||!img.complete) return;
+    if(!img||!img.complete||!img.naturalWidth) return;
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0,0,w,h);
-    // cover fit
     const ir = img.width/img.height;
     const cr = w/h;
     let dw, dh, dx, dy;
@@ -116,39 +118,50 @@ window.HardwareSequence = function(opts){
   }
 
   function loop(t){
-    if(!last) last=t;
-    const dt = t-last;
-    if(running && dt > (1000/fps)/speed){
-      current = (current+1) % total;
+    if(!lastT) lastT = t;
+    const dt = t - lastT;
+    lastT = t;
+    if(running && ready){
+      acc += dt * speed;
+      const frameMs = 1000 / fps;
+      while(acc >= frameMs){
+        current = (current + 1) % total;
+        acc -= frameMs;
+      }
       drawIdx(current);
-      last = t;
     }
     requestAnimationFrame(loop);
   }
 
-  // Lazy preload — start with first frames so we can show something fast
   function loadOne(i){
-    const im = new Image();
-    im.decoding='async';
-    im.src = path + pad(i+1) + '.jpg';
-    im.onload = ()=>{
-      loaded++;
-      if(i===0) drawIdx(0);
-      if(loaded===total && opts.onReady) opts.onReady();
-    };
-    im.onerror = ()=>{ loaded++; };
-    imgs[i]=im;
+    return new Promise(resolve=>{
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = ()=>{
+        loaded++;
+        if(i===0) drawIdx(0);
+        resolve();
+      };
+      im.onerror = ()=>{ loaded++; resolve(); };
+      im.src = path + pad(i+1) + '.jpg';
+      imgs[i] = im;
+    });
   }
-  // load priority 1: frame 0 immediately
-  loadOne(0);
-  // batch the rest
-  let q = 1;
-  function pump(){
-    const batch = 8;
-    for(let k=0;k<batch && q<total;k++,q++) loadOne(q);
-    if(q<total) setTimeout(pump, 30);
+
+  async function preloadAll(){
+    // Load priority frame first so something shows immediately
+    await loadOne(0);
+    // Batch remaining in parallel groups to avoid request flood
+    const batchSize = 12;
+    const tasks = [];
+    for(let i=1;i<total;i++) tasks.push(()=>loadOne(i));
+    for(let i=0;i<tasks.length;i+=batchSize){
+      await Promise.all(tasks.slice(i,i+batchSize).map(fn=>fn()));
+    }
+    ready = true;
+    if(opts.onReady) opts.onReady();
   }
-  setTimeout(pump, 50);
+  preloadAll();
 
   requestAnimationFrame(loop);
 
@@ -156,6 +169,7 @@ window.HardwareSequence = function(opts){
     setSpeed:(s)=>{ speed = Math.max(0.1, s) },
     pause:()=>{ running=false },
     play:()=>{ running=true },
+    isReady:()=>ready,
   };
 };
 
