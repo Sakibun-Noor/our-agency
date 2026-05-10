@@ -76,22 +76,25 @@
   });
 })();
 
-/* === Hardware sequence canvas (smooth: preload all + sub-pixel timing) === */
+/* === Hardware sequence canvas (start playing within startDelayMs, stream rest) === */
 window.HardwareSequence = function(opts){
   const canvas = opts.canvas;
   const total = opts.total || 240;
   const path = opts.path || 'frames/';
   const fps = opts.fps || 30;
+  const startDelayMs = opts.startDelayMs != null ? opts.startDelayMs : 1500;
   const ctx = canvas.getContext('2d', {alpha:true, desynchronized:true});
   const dpr = Math.min(2, window.devicePixelRatio||1);
   const imgs = new Array(total);
   let loaded = 0;
   let ready = false;
+  let lastDrawn = -1;
   let current = 0;
   let acc = 0;
   let lastT = 0;
   let speed = 1;
   let running = true;
+  const t0 = performance.now();
 
   function pad(n){return String(n).padStart(3,'0')}
 
@@ -99,14 +102,19 @@ window.HardwareSequence = function(opts){
     const r = canvas.getBoundingClientRect();
     canvas.width = Math.round(r.width*dpr);
     canvas.height = Math.round(r.height*dpr);
-    if(imgs[current]) drawIdx(current);
+    if(lastDrawn >= 0) drawIdx(lastDrawn);
   }
   resize();
   new ResizeObserver(resize).observe(canvas);
 
+  function isLoaded(i){
+    const img = imgs[i];
+    return img && img.complete && img.naturalWidth > 0;
+  }
+
   function drawIdx(i){
     const img = imgs[i];
-    if(!img||!img.complete||!img.naturalWidth) return;
+    if(!isLoaded(i)) return;
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0,0,w,h);
     const ir = img.width/img.height;
@@ -115,12 +123,18 @@ window.HardwareSequence = function(opts){
     if(ir>cr){ dh=h; dw=h*ir; dx=(w-dw)/2; dy=0; }
     else { dw=w; dh=w/ir; dx=0; dy=(h-dh)/2; }
     ctx.drawImage(img,dx,dy,dw,dh);
+    lastDrawn = i;
   }
 
   function loop(t){
     if(!lastT) lastT = t;
     const dt = t - lastT;
     lastT = t;
+    // Activate playback once startDelayMs elapsed AND at least the first frame is up
+    if(!ready && (t - t0) >= startDelayMs && isLoaded(0)){
+      ready = true;
+      if(opts.onStart) opts.onStart();
+    }
     if(running && ready){
       acc += dt * speed;
       const frameMs = 1000 / fps;
@@ -128,7 +142,8 @@ window.HardwareSequence = function(opts){
         current = (current + 1) % total;
         acc -= frameMs;
       }
-      drawIdx(current);
+      // Draw available frame; if not yet loaded, hold previous (no stutter)
+      if(isLoaded(current)) drawIdx(current);
     }
     requestAnimationFrame(loop);
   }
@@ -139,7 +154,7 @@ window.HardwareSequence = function(opts){
       im.decoding = 'async';
       im.onload = ()=>{
         loaded++;
-        if(i===0) drawIdx(0);
+        if(i===0 && lastDrawn < 0) drawIdx(0);
         resolve();
       };
       im.onerror = ()=>{ loaded++; resolve(); };
@@ -148,20 +163,19 @@ window.HardwareSequence = function(opts){
     });
   }
 
-  async function preloadAll(){
-    // Load priority frame first so something shows immediately
+  async function preloadStream(){
+    // Frame 0 first — instant first paint
     await loadOne(0);
-    // Batch remaining in parallel groups to avoid request flood
-    const batchSize = 12;
+    // Stream remaining in larger parallel batches so playback has frames ready quickly
+    const batchSize = 24;
     const tasks = [];
     for(let i=1;i<total;i++) tasks.push(()=>loadOne(i));
     for(let i=0;i<tasks.length;i+=batchSize){
       await Promise.all(tasks.slice(i,i+batchSize).map(fn=>fn()));
     }
-    ready = true;
     if(opts.onReady) opts.onReady();
   }
-  preloadAll();
+  preloadStream();
 
   requestAnimationFrame(loop);
 
@@ -170,6 +184,7 @@ window.HardwareSequence = function(opts){
     pause:()=>{ running=false },
     play:()=>{ running=true },
     isReady:()=>ready,
+    framesLoaded:()=>loaded,
   };
 };
 
