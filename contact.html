@@ -160,7 +160,7 @@
     };
 
     try{
-      const res = await fetch('api/submit.php', {
+      const res = await fetch('https://myagency.page.gd/api/submit.php', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(data),
