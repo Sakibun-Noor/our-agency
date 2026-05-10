@@ -6,7 +6,7 @@
 <title>Digital Harbor — The Operating System for Modern Brands</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/site.css">
 <script>
   // Tweak defaults — host rewrites this block on edits
@@ -25,9 +25,9 @@
 
   <!-- HERO -->
   <section class="hero" data-screen-label="01 Hero">
-    <video class="hero-video" autoplay muted loop playsinline preload="auto" poster="">
-      <source src="agencyvideo.mp4" type="video/mp4">
-    </video>
+    <div class="hero-anim">
+      <canvas id="hwCanvas"></canvas>
+    </div>
     <div class="hero-video-overlay"></div>
 
     <div class="bgfield">
@@ -37,19 +37,18 @@
     </div>
 
     <div class="shell hero-shell">
-      <div class="hero-card reveal-stagger">
-        <div class="hero-eyebrow"><span class="dot"></span> Digital Harbor &mdash; SF · NYC · remote</div>
+      <div class="hero-content reveal-stagger">
+        <div class="hero-eyebrow"><span class="dot"></span> Available for new projects</div>
         <h1>
-          The <em>operating</em><br>
-          <span class="accent">system</span> for<br>
-          modern brands.
+          The <span class="serif"><em>operating system</em></span><br>
+          for <span class="accent">modern brands.</span>
         </h1>
         <p class="hero-sub">
-          We build the strategy, design and engineering that lets ambitious teams ship like a Series-D engineering org &mdash; without becoming one. One studio. Every layer of the stack.
+          Strategy, design and engineering that lets ambitious teams ship like a Series&#8209;D engineering org&nbsp;— without becoming one.
         </p>
         <div class="hero-cta">
           <a href="contact.html" class="btn btn-primary magnet">Start a project <span class="arrow">→</span></a>
-          <a href="work.html" class="btn magnet">Selected work <span class="arrow">→</span></a>
+          <a href="work.html" class="btn btn-ghost magnet">View work</a>
         </div>
       </div>
     </div>
@@ -371,6 +370,13 @@
 <script src="assets/site.js"></script>
 <script>
   (function(){
+    const cv = document.getElementById('hwCanvas');
+    if(cv){
+      window.__hwInstance = window.HardwareSequence({
+        canvas: cv, total: 240, path: 'frames/', fps: 30
+      });
+      window.__hwInstance.setSpeed(window.__hwSpeed||1);
+    }
     const cir = document.getElementById('circuit');
     if(cir) window.CircuitCanvas(cir);
   })();
