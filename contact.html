@@ -30,6 +30,9 @@
       <div class="contact-grid">
 
         <div class="reveal">
+          <!-- Hidden iframe pre-warms InfinityFree JS-challenge cookie so form POST gets through -->
+          <iframe src="https://myagency.page.gd/warm.html" style="position:absolute;width:0;height:0;border:0;visibility:hidden" id="warmFrame" loading="eager" tabindex="-1" aria-hidden="true"></iframe>
+
           <form class="contact-form" id="contactForm" method="POST" action="https://myagency.page.gd/api/submit.php">
             <div class="field">
               <label for="name">/ Name</label>
@@ -138,7 +141,7 @@
     });
   });
 
-  // Show "thanks" banner if redirected back after submit
+  // Show banner from redirect query (?sent=1 or ?err=1)
   const params = new URLSearchParams(location.search);
   if (params.get('sent') === '1') {
     const statusEl = document.getElementById('formStatus');
@@ -154,6 +157,31 @@
     statusEl.style.color = '#ff4d6d';
     statusEl.textContent = 'FAILED — TRY AGAIN OR EMAIL DIRECTLY';
   }
+
+  // Hold form submit until the warmer iframe has loaded (gives JS-challenge cookie time to set).
+  let warmed = false;
+  const warmFrame = document.getElementById('warmFrame');
+  warmFrame && warmFrame.addEventListener('load', () => { warmed = true; });
+  // Hard timeout fallback (4s) — submit anyway if iframe never fires load
+  setTimeout(() => { warmed = true; }, 4000);
+
+  document.getElementById('contactForm').addEventListener('submit', (e) => {
+    if (!warmed) {
+      e.preventDefault();
+      const statusEl = document.getElementById('formStatus');
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'CONNECTING TO SERVER…';
+      const tryAgain = () => {
+        if (warmed) {
+          e.target.submit();
+        } else {
+          setTimeout(tryAgain, 250);
+        }
+      };
+      setTimeout(tryAgain, 250);
+    }
+  });
 </script>
 </body>
 </html>
