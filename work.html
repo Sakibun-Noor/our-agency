@@ -157,18 +157,8 @@
 
 <div data-mount="footer"></div>
 
-<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.42/bundled/lenis.min.js"></script>
-<script>
-  (function(){
-    if(typeof Lenis === 'undefined') return;
-    const isMobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
-    if(isMobile) return;
-    const lenis = new Lenis({duration:1.4,easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)),smoothWheel:true,smoothTouch:false});
-    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-    window.__lenis = lenis;
-  })();
-</script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="assets/smooth.js"></script>
 <script src="assets/layout.js"></script>
 <script src="assets/site.js"></script>
 </body>

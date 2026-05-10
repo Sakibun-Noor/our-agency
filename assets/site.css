@@ -727,7 +727,9 @@ body::before{
   @media(max-width:480px){.hero{min-height:84dvh}}
 }
 
-/* Disable Lenis smooth scroll on mobile (use native momentum scroll) */
-@media(max-width:760px){
-  html.lenis,html.lenis body{overflow:auto !important;height:auto !important}
-}
+/* Lenis CSS — required for proper scroll containment */
+html.lenis,html.lenis body{height:auto}
+html.lenis-smooth{scroll-behavior:auto !important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
+.lenis.lenis-scrolling iframe{pointer-events:none}
