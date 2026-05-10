@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About — Digital Harbor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body data-page="about">
+
+<div data-mount="nav"></div>
+
+<main>
+
+  <section class="page-hero">
+    <div class="shell">
+      <div class="reveal">
+        <div class="eyebrow" style="margin-bottom:24px">/ The studio</div>
+        <h1>Small, <em>senior,</em><br>in&#8209;house.</h1>
+        <p class="lede">Three operators. One studio. We've ran growth at Linear, design at Vercel, and engineering at Notion — now wrapped into a single retainer for the brands we believe in.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Manifesto -->
+  <section class="section" style="padding-top:60px">
+    <div class="shell">
+      <div class="obj-grid">
+        <div class="reveal">
+          <div class="eyebrow" style="margin-bottom:24px">/ 01 — Why this exists</div>
+          <h2 style="font-family:var(--display);font-weight:300;letter-spacing:-0.03em;line-height:1;font-size:clamp(36px,4.6vw,68px)">We were tired of <em style="font-style:italic;color:var(--accent);font-weight:400">handoffs.</em></h2>
+        </div>
+        <div class="reveal">
+          <p style="color:var(--sub-text);font-size:16px;line-height:1.6">Most agencies hand you a deck and a Slack channel, then disappear into Notion until the invoice arrives. We hated that as clients, and we hated it as operators.</p>
+          <p style="color:var(--sub-text);font-size:16px;line-height:1.6;margin-top:18px">Digital Harbor is what happens when strategy, design, engineering, and growth sit on one Linear board, in one weekly cadence, with one bill at the end of the quarter.</p>
+          <p style="color:var(--sub-text);font-size:16px;line-height:1.6;margin-top:18px">We turn down more work than we take. That's the only way the math works.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team -->
+  <section class="section" style="padding-top:0">
+    <div class="shell">
+      <div class="sec-head reveal">
+        <div class="label">/ 02 — Team</div>
+        <h2>The <em>three operators.</em></h2>
+      </div>
+      <div class="team reveal-stagger" style="grid-template-columns:repeat(3,1fr)">
+
+        <div class="member">
+          <div class="ph"><div class="glyph">FA</div></div>
+          <div class="info">
+            <h4>Farzat Amin</h4>
+            <p>Founder · Strategy &amp; Brand</p>
+          </div>
+        </div>
+
+        <div class="member">
+          <div class="ph"><div class="glyph">SN</div></div>
+          <div class="info">
+            <h4>Sakibun Noor</h4>
+            <p>Engineering &amp; Performance</p>
+          </div>
+        </div>
+
+        <div class="member">
+          <div class="ph"><div class="glyph">SH</div></div>
+          <div class="info">
+            <h4>Shafin</h4>
+            <p>Design &amp; Product Systems</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Counters -->
+  <section class="section" style="padding-top:0;padding-bottom:120px">
+    <div class="shell">
+      <div class="counters reveal-stagger">
+        <div class="cell"><div class="num"><span class="counter" data-to="62">0</span><em>+</em></div><div class="lbl">Brands shipped</div></div>
+        <div class="cell"><div class="num"><span class="counter" data-to="240">0</span><em>k</em></div><div class="lbl">Hours engineered</div></div>
+        <div class="cell"><div class="num"><span class="counter" data-to="3.4" data-decimals="1">0</span><em>×</em></div><div class="lbl">Avg. revenue lift</div></div>
+        <div class="cell"><div class="num"><span class="counter" data-to="11">0</span><em> yrs</em></div><div class="lbl">Studio operating</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div data-mount="footer"></div>
+
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.42/bundled/lenis.min.js"></script>
+<script>
+  (function(){
+    if(typeof Lenis === 'undefined') return;
+    const isMobile = window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+    if(isMobile) return;
+    const lenis = new Lenis({duration:1.4,easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)),smoothWheel:true,smoothTouch:false});
+    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    window.__lenis = lenis;
+  })();
+</script>
+<script src="assets/layout.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>
