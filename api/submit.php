@@ -3,7 +3,7 @@ require_once __DIR__ . '/../includes/db.php';
 
 $cfg = require __DIR__ . '/../includes/config.php';
 
-// CORS
+// CORS (only useful if InfinityFree challenge isn't blocking — keep for completeness)
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowed = $cfg['site']['cors_origins'];
 if ($allowed === '*' || in_array($origin, array_map('trim', explode(',', $allowed)), true)) {
@@ -14,21 +14,38 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['ok' => false, 'error' => 'Method not allowed']);
+// Accept either JSON body (fetch) or form-encoded (native form POST with redirect)
+$raw = file_get_contents('php://input');
+$data = [];
+$isJson = false;
+if ($raw && str_starts_with(trim($raw), '{')) {
+    $data = json_decode($raw, true) ?: [];
+    $isJson = true;
+} else {
+    $data = $_POST;
+}
+
+// Where to redirect form-POST submissions back to (set in config)
+$returnUrl = rtrim(($cfg['site']['return_url'] ?? 'https://our-agency-tau.vercel.app/contact.html'), '/');
+
+function form_redirect(string $url, bool $ok): void {
+    header('Location: ' . $url . ($ok ? '?sent=1' : '?err=1') . '#contact');
     exit;
 }
 
-header('Content-Type: application/json');
+function fail(string $msg, int $code, bool $isJson, string $returnUrl): void {
+    if ($isJson) {
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => false, 'error' => $msg]);
+    } else {
+        form_redirect($returnUrl, false);
+    }
+    exit;
+}
 
-// Accept either JSON body or form-encoded
-$raw = file_get_contents('php://input');
-$data = [];
-if ($raw && str_starts_with(trim($raw), '{')) {
-    $data = json_decode($raw, true) ?: [];
-} else {
-    $data = $_POST;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    fail('Method not allowed', 405, $isJson, $returnUrl);
 }
 
 $name    = trim($data['name']    ?? '');
@@ -40,7 +57,8 @@ $msg     = trim($data['message'] ?? '');
 
 // Honeypot — bots fill hidden 'website' field
 if (!empty($data['website'])) {
-    echo json_encode(['ok' => true]); exit; // pretend success
+    if ($isJson) { echo json_encode(['ok' => true]); exit; }
+    form_redirect($returnUrl, true);
 }
 
 $errors = [];
@@ -48,9 +66,7 @@ if ($name === '' || mb_strlen($name) > 200) $errors[] = 'name';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'email';
 if ($msg === '' || mb_strlen($msg) > 5000) $errors[] = 'message';
 if ($errors) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Invalid input', 'fields' => $errors]);
-    exit;
+    fail('Invalid input', 400, $isJson, $returnUrl);
 }
 
 try {
@@ -85,8 +101,12 @@ try {
              . "X-Mailer: PHP/" . phpversion();
     @mail($to, $subject, $body, $headers); // best-effort; never fail the form on mail failure
 
-    echo json_encode(['ok' => true, 'id' => (int)$id]);
+    if ($isJson) {
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true, 'id' => (int)$id]);
+    } else {
+        form_redirect($returnUrl, true);
+    }
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => 'Server error']);
+    fail('Server error', 500, $isJson, $returnUrl);
 }

@@ -30,7 +30,7 @@
       <div class="contact-grid">
 
         <div class="reveal">
-          <form class="contact-form" id="contactForm" novalidate>
+          <form class="contact-form" id="contactForm" method="POST" action="https://myagency.page.gd/api/submit.php">
             <div class="field">
               <label for="name">/ Name</label>
               <input type="text" id="name" name="name" placeholder="Your name" required>
@@ -138,48 +138,22 @@
     });
   });
 
-  // Submit contact form to PHP backend
-  const form = document.getElementById('contactForm');
-  const statusEl = document.getElementById('formStatus');
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true;
+  // Show "thanks" banner if redirected back after submit
+  const params = new URLSearchParams(location.search);
+  if (params.get('sent') === '1') {
+    const statusEl = document.getElementById('formStatus');
     statusEl.style.display = 'block';
-    statusEl.style.color = 'var(--muted)';
-    statusEl.textContent = 'SENDING…';
-
-    const data = {
-      name: form.name.value.trim(),
-      email: form.email.value.trim(),
-      company: form.company.value.trim(),
-      budget: form.budget.value,
-      scope: form.scope.value,
-      message: form.message.value.trim(),
-      website: form.website.value, // honeypot
-    };
-
-    try{
-      const res = await fetch('https://myagency.page.gd/api/submit.php', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(data),
-      });
-      const json = await res.json();
-      if(res.ok && json.ok){
-        statusEl.style.color = '#22c55e';
-        statusEl.textContent = '✓ SENT — WE\'LL BE IN TOUCH';
-        form.reset();
-        document.getElementById('budgetVal').value = '90-180';
-      } else {
-        throw new Error(json.error || 'Failed');
-      }
-    } catch(err){
-      statusEl.style.color = '#ff4d6d';
-      statusEl.textContent = 'FAILED — ' + (err.message || 'TRY AGAIN');
-      btn.disabled = false;
-    }
-  });
+    statusEl.style.color = '#22c55e';
+    statusEl.textContent = '✓ SENT — WE\'LL BE IN TOUCH';
+    document.getElementById('contactForm').reset();
+    document.getElementById('budgetVal').value = '90-180';
+  }
+  if (params.get('err') === '1') {
+    const statusEl = document.getElementById('formStatus');
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#ff4d6d';
+    statusEl.textContent = 'FAILED — TRY AGAIN OR EMAIL DIRECTLY';
+  }
 </script>
 </body>
 </html>
