@@ -152,7 +152,10 @@ window.HardwareSequence = function(opts){
     return new Promise(resolve=>{
       const im = new Image();
       im.decoding = 'async';
-      im.onload = ()=>{
+      im.loading  = 'eager';
+      im.onload = async ()=>{
+        // Pre-decode so first draw doesn't stutter the main thread
+        try { if (im.decode) await im.decode(); } catch(e){}
         loaded++;
         if(i===0 && lastDrawn < 0) drawIdx(0);
         resolve();
@@ -166,14 +169,21 @@ window.HardwareSequence = function(opts){
   async function preloadStream(){
     // Frame 0 first — instant first paint
     await loadOne(0);
-    // Stream remaining in larger parallel batches so playback has frames ready quickly
-    const batchSize = 24;
-    const tasks = [];
-    for(let i=1;i<total;i++) tasks.push(()=>loadOne(i));
-    for(let i=0;i<tasks.length;i+=batchSize){
-      await Promise.all(tasks.slice(i,i+batchSize).map(fn=>fn()));
+
+    // Priority burst: frames 1..30 (first second of playback) load in parallel right away
+    const burst = [];
+    for(let i=1; i<Math.min(31, total); i++) burst.push(loadOne(i));
+    await Promise.all(burst);
+
+    // Remaining frames stream in fatter parallel batches (no awaits between batches)
+    const batchSize = 32;
+    const pending = [];
+    for(let i=31; i<total; i++) pending.push(loadOne(i));
+    // Don't await — let RAF loop pick them up as they arrive
+    for(let i=0;i<pending.length;i+=batchSize){
+      Promise.all(pending.slice(i,i+batchSize)); // fire and forget
     }
-    if(opts.onReady) opts.onReady();
+    Promise.all(pending).then(()=>{ if(opts.onReady) opts.onReady(); });
   }
   preloadStream();
 

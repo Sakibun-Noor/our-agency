@@ -11,7 +11,7 @@
 <script>
   // Tweak defaults — host rewrites this block on edits
   window.__defaults = /*EDITMODE-BEGIN*/{
-    "accent": "magenta",
+    "accent": "maroon",
     "hwPosition": "right",
     "hwSpeed": 0.75
   }/*EDITMODE-END*/;
@@ -394,7 +394,7 @@
     const cv = document.getElementById('hwCanvas');
     if(cv){
       window.__hwInstance = window.HardwareSequence({
-        canvas: cv, total: 240, path: 'frames/', fps: 30
+        canvas: cv, total: 240, path: 'frames/', fps: 30, startDelayMs: 800
       });
       window.__hwInstance.setSpeed(window.__hwSpeed||1);
     }

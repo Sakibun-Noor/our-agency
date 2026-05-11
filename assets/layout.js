@@ -144,7 +144,7 @@
   const ACCENTS = {
     cyan:    { dark:{a:'#00E5FF',b:'#9D5CFF'}, light:{a:'#0099B8',b:'#6B3DC9'} },
     purple:  { dark:{a:'#9D5CFF',b:'#00E5FF'}, light:{a:'#6B3DC9',b:'#0099B8'} },
-    magenta: { dark:{a:'#FF3DA1',b:'#00E5FF'}, light:{a:'#C32077',b:'#0099B8'} },
+    maroon:  { dark:{a:'#B0455A',b:'#00E5FF'}, light:{a:'#7A2E3F',b:'#0099B8'} },
     lime:    { dark:{a:'#B6FF3C',b:'#00E5FF'}, light:{a:'#5C8F1A',b:'#0099B8'} },
   };
   function applyTheme(t){
