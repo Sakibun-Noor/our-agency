@@ -205,24 +205,45 @@ body::before{
 .hero-anim canvas{
   position:relative;z-index:1;
   width:100%;height:100%;display:block;object-fit:cover;
-  -webkit-mask-image:radial-gradient(ellipse 95% 80% at 50% 50%,#000 50%,rgba(0,0,0,.65) 75%,rgba(0,0,0,0) 100%);
-          mask-image:radial-gradient(ellipse 95% 80% at 50% 50%,#000 50%,rgba(0,0,0,.65) 75%,rgba(0,0,0,0) 100%);
+  image-rendering:high-quality;
+  /* Soft edge feather only — main darkening lives in .hero-video-overlay */
+  -webkit-mask-image:radial-gradient(ellipse 120% 100% at 50% 48%,#000 72%,rgba(0,0,0,.55) 90%,rgba(0,0,0,0) 100%);
+          mask-image:radial-gradient(ellipse 120% 100% at 50% 48%,#000 72%,rgba(0,0,0,.55) 90%,rgba(0,0,0,0) 100%);
+  /* Smooth fade-in on first paint + cinematic Ken Burns drift */
+  opacity:0;
+  transform:scale(1.02);
+  transform-origin:50% 52%;
+  transition:opacity 1.6s cubic-bezier(.2,.7,.2,1);
+  will-change:opacity,transform;
 }
-/* Sharpen + boost the upscaled 720p frames */
-.hero-anim canvas{image-rendering:high-quality}
-[data-theme="dark"] .hero-anim canvas{filter:contrast(1.08) saturate(1.15) brightness(1.02)}
-[data-theme="light"] .hero-anim canvas{filter:contrast(1.12) saturate(1.20) brightness(1.02)}
+.hero-anim.ready canvas{
+  opacity:1;
+  animation:heroKenBurns 38s ease-in-out infinite alternate;
+}
+@keyframes heroKenBurns{
+  0%   { transform:scale(1.02) translate3d(0,0,0); }
+  100% { transform:scale(1.08) translate3d(-1.5%,-1%,0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-anim.ready canvas{ animation:none; transform:scale(1.02); }
+}
+
+/* Color grading — pop the upscaled frames without crushing them */
+[data-theme="dark"]  .hero-anim canvas{filter:contrast(1.08) saturate(1.18) brightness(1.03)}
+[data-theme="light"] .hero-anim canvas{filter:contrast(1.12) saturate(1.22) brightness(1.03)}
+
 .hero-video-overlay{
   position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 80% at 50% 50%,transparent 0%,var(--hero-overlay-mid) 35%,var(--hero-overlay-bot) 80%),
-    linear-gradient(180deg,var(--hero-overlay-top) 0%,transparent 25%,transparent 75%,var(--hero-overlay-bot) 100%);
+    /* Cinematic top/bottom letterbox-feel + bottom watermark safety mask */
+    linear-gradient(180deg,rgba(4,6,12,.55) 0%,transparent 18%,transparent 72%,rgba(4,6,12,.78) 100%),
+    /* Soft center vignette keeps text legible */
+    radial-gradient(ellipse 80% 90% at 50% 50%,transparent 0%,rgba(4,6,12,.18) 55%,rgba(4,6,12,.55) 100%);
 }
 [data-theme="light"] .hero-video-overlay{
-  /* Use dark overlay so cyan/magenta saturate properly on the dark stage */
   background:
-    radial-gradient(ellipse 65% 70% at 50% 50%,transparent 0%,rgba(2,4,10,.20) 45%,rgba(2,4,10,.65) 90%),
-    linear-gradient(180deg,rgba(2,4,10,.45) 0%,transparent 25%,transparent 70%,rgba(2,4,10,.85) 100%);
+    linear-gradient(180deg,rgba(4,6,12,.55) 0%,transparent 18%,transparent 72%,rgba(4,6,12,.82) 100%),
+    radial-gradient(ellipse 80% 90% at 50% 50%,transparent 0%,rgba(4,6,12,.22) 55%,rgba(4,6,12,.60) 100%);
 }
 
 /* In light mode, hero is its own dark stage — keeps "premium intricate detail" of dark mode.

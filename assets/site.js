@@ -76,19 +76,23 @@
   });
 })();
 
-/* === Hardware sequence canvas (start playing within startDelayMs, stream rest) === */
+/* === Hardware sequence canvas — cinematic loop with seamless crossfade === */
 window.HardwareSequence = function(opts){
   const canvas = opts.canvas;
-  const total = opts.total || 240;
-  const path = opts.path || 'frames/';
-  const fps = opts.fps || 30;
+  const total  = opts.total || 240;
+  const path   = opts.path  || 'frames/';
+  const fps    = opts.fps   || 30;
   const startDelayMs = opts.startDelayMs != null ? opts.startDelayMs : 1500;
+  // Crossfade length in frames — last N frames blend into first N (seamless loop)
+  const FADE   = opts.fadeFrames != null ? opts.fadeFrames : 28;
+  // Crop bottom strip of source (hides AI-tool watermark on raw frames)
+  const CROP_BOTTOM = opts.cropBottom != null ? opts.cropBottom : 0.085;
+
   const ctx = canvas.getContext('2d', {alpha:true, desynchronized:true});
-  // Allow up to 3× DPR for sharp rendering on high-res/retina displays
   const dpr = Math.min(3, window.devicePixelRatio||1);
-  // Bitmaps decoded off-main-thread for smooth playback; fall back to Image
   const useBitmap = typeof createImageBitmap === 'function';
   const imgs = new Array(total);
+
   let loaded = 0;
   let ready = false;
   let lastDrawn = -1;
@@ -97,13 +101,14 @@ window.HardwareSequence = function(opts){
   let lastT = 0;
   let speed = 1;
   let running = true;
+  let firstPainted = false;
   const t0 = performance.now();
 
   function pad(n){return String(n).padStart(3,'0')}
 
   function resize(){
     const r = canvas.getBoundingClientRect();
-    canvas.width = Math.round(r.width*dpr);
+    canvas.width  = Math.round(r.width*dpr);
     canvas.height = Math.round(r.height*dpr);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
@@ -119,27 +124,56 @@ window.HardwareSequence = function(opts){
     return b.complete && b.naturalWidth > 0;
   }
 
-  function drawIdx(i){
+  // Draw a single frame with cover-fit and watermark crop. Optional alpha for crossfade.
+  function drawSingle(i, alpha){
     const img = imgs[i];
+    if(!img) return;
+    const w = canvas.width, h = canvas.height;
+    const iw = useBitmap ? img.width  : img.naturalWidth;
+    const ih = useBitmap ? img.height : img.naturalHeight;
+    const srcW = iw;
+    const srcH = ih * (1 - CROP_BOTTOM);
+    const ir = srcW / srcH;
+    const cr = w / h;
+    let dw, dh, dx, dy;
+    if(ir > cr){ dh=h; dw=h*ir; dx=(w-dw)/2; dy=0; }
+    else       { dw=w; dh=w/ir; dx=0; dy=(h-dh)/2; }
+    if(alpha < 1) ctx.globalAlpha = alpha;
+    ctx.drawImage(img, 0, 0, srcW, srcH, dx, dy, dw, dh);
+    if(alpha < 1) ctx.globalAlpha = 1;
+  }
+
+  // Compose: current frame, plus crossfade with head when in the tail region
+  function drawIdx(i){
     if(!isLoaded(i)) return;
     const w = canvas.width, h = canvas.height;
-    const iw = useBitmap ? img.width : img.naturalWidth;
-    const ih = useBitmap ? img.height : img.naturalHeight;
     ctx.clearRect(0,0,w,h);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    const ir = iw/ih;
-    const cr = w/h;
-    let dw, dh, dx, dy;
-    if(ir>cr){ dh=h; dw=h*ir; dx=(w-dw)/2; dy=0; }
-    else { dw=w; dh=w/ir; dx=0; dy=(h-dh)/2; }
-    ctx.drawImage(img,dx,dy,dw,dh);
+
+    drawSingle(i, 1);
+
+    // Crossfade tail-to-head — seam becomes invisible
+    if(i >= total - FADE){
+      const t = (i - (total - FADE)) / FADE;     // 0 → 1 across the fade
+      const eased = t*t*(3 - 2*t);                // smoothstep
+      const headIdx = Math.min(total-1, Math.floor(t * (FADE-1)));
+      if(isLoaded(headIdx)) drawSingle(headIdx, eased);
+    }
+
     lastDrawn = i;
+
+    if(!firstPainted){
+      firstPainted = true;
+      const host = canvas.parentElement;
+      if(host) host.classList.add('ready');
+      if(opts.onFirstPaint) opts.onFirstPaint();
+    }
   }
 
   function loop(t){
     if(!lastT) lastT = t;
-    const dt = Math.min(t - lastT, 100); // clamp large dt spikes (tab switch etc.)
+    const dt = Math.min(t - lastT, 100);
     lastT = t;
     if(!ready && (t - t0) >= startDelayMs && isLoaded(0)){
       ready = true;
@@ -185,15 +219,18 @@ window.HardwareSequence = function(opts){
   async function preloadStream(){
     await loadOne(0);
 
-    // Larger burst — 60 frames (2s of playback) loaded before looping begins
+    // Burst: first 90 frames AND last FADE frames (needed for crossfade)
     const burst = [];
-    for(let i=1; i<Math.min(61, total); i++) burst.push(loadOne(i));
+    for(let i=1; i<Math.min(91, total); i++) burst.push(loadOne(i));
+    for(let i=Math.max(91, total-FADE); i<total; i++) burst.push(loadOne(i));
     await Promise.all(burst);
 
-    // Stream the rest in parallel batches; RAF picks them up as they arrive
+    // Stream the middle in parallel
     const batchSize = 40;
     const pending = [];
-    for(let i=61; i<total; i++) pending.push(loadOne(i));
+    for(let i=91; i<total-FADE; i++){
+      if(!imgs[i]) pending.push(loadOne(i));
+    }
     for(let i=0;i<pending.length;i+=batchSize){
       Promise.all(pending.slice(i,i+batchSize));
     }
