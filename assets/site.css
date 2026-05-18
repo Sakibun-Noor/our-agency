@@ -55,9 +55,9 @@
   --btn-invert-fg:#FFFFFF;
   --sub-text:#43403A;
   --link-text:#1F1D1A;
-  --cyan:#FF5722;
+  --cyan:#1D4ED8;
   --purple:#1F1D1A;
-  --accent:#FF5722;
+  --accent:#1D4ED8;
   --accent-2:#1F1D1A;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -164,7 +164,7 @@ body::before{
 }
 .btn:hover{background:var(--panel);border-color:var(--accent)}
 .btn-primary{background:var(--btn-invert-bg);color:var(--btn-invert-fg);border-color:var(--btn-invert-bg)}
-.btn-primary:hover{box-shadow:0 0 0 1px var(--accent),0 0 40px -4px var(--accent)}
+.btn-primary:hover{background:var(--btn-invert-bg);color:var(--btn-invert-fg);border-color:var(--btn-invert-bg);box-shadow:0 0 0 1px var(--accent),0 0 40px -4px var(--accent)}
 .btn .arrow{transition:transform .25s}
 .btn:hover .arrow{transform:translateX(3px)}
 .btn-ghost{background:transparent}
@@ -644,9 +644,16 @@ body::before{
   .hero-cta .btn{justify-content:center}
   .hero-cta .btn-ghost{padding:12px 8px}
   .hero-eyebrow{font-size:10px;letter-spacing:.16em;padding:6px 12px}
+  .hero-anim{inset:0}
   .hero-anim canvas{
-    -webkit-mask-image:radial-gradient(ellipse 110% 70% at 50% 50%,#000 50%,rgba(0,0,0,.55) 75%,rgba(0,0,0,0) 100%);
-            mask-image:radial-gradient(ellipse 110% 70% at 50% 50%,#000 50%,rgba(0,0,0,.55) 75%,rgba(0,0,0,0) 100%);
+    width:100%;height:100%;
+    -webkit-mask-image:radial-gradient(ellipse 130% 85% at 50% 45%,#000 55%,rgba(0,0,0,.6) 80%,rgba(0,0,0,0) 100%);
+            mask-image:radial-gradient(ellipse 130% 85% at 50% 45%,#000 55%,rgba(0,0,0,.6) 80%,rgba(0,0,0,0) 100%);
+  }
+  .hero-video-overlay{
+    background:
+      radial-gradient(ellipse 80% 90% at 50% 50%,transparent 0%,rgba(8,9,12,.20) 40%,rgba(8,9,12,.65) 85%),
+      linear-gradient(180deg,rgba(8,9,12,.35) 0%,transparent 30%,transparent 70%,rgba(8,9,12,.75) 100%);
   }
   .hero-meta{display:none}
   .shell{padding:0 18px}

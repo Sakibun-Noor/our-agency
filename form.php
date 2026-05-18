@@ -53,7 +53,7 @@ $err  = isset($_GET['err'])  && $_GET['err']  === '1';
   body.light{
     --fg:#0F0F10;--muted:#6E665B;
     --line:rgba(15,15,16,0.10);--line-2:rgba(15,15,16,0.20);
-    --accent:#FF5722;
+    --accent:#1D4ED8;
   }
   body.light select option{background:#fff;color:#000}
 </style>

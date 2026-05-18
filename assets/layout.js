@@ -99,7 +99,7 @@
           <div class="foot-cols">
             <div>
               <h5>Studio</h5>
-              <p style="font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-0.02em;line-height:1.2;color:#cfd2d8;margin-top:-4px;max-width:32ch">
+              <p style="font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-0.02em;line-height:1.2;color:var(--link-text);margin-top:-4px;max-width:32ch">
                 A small senior studio building digital systems — strategy, brand, product, growth.
               </p>
             </div>
@@ -144,7 +144,8 @@
   const ACCENTS = {
     cyan:    { dark:{a:'#00E5FF',b:'#9D5CFF'}, light:{a:'#0099B8',b:'#6B3DC9'} },
     purple:  { dark:{a:'#9D5CFF',b:'#00E5FF'}, light:{a:'#6B3DC9',b:'#0099B8'} },
-    maroon:  { dark:{a:'#B0455A',b:'#00E5FF'}, light:{a:'#7A2E3F',b:'#0099B8'} },
+    blue:    { dark:{a:'#3B82F6',b:'#00E5FF'}, light:{a:'#1D4ED8',b:'#0099B8'} },
+    maroon:  { dark:{a:'#3B82F6',b:'#00E5FF'}, light:{a:'#1D4ED8',b:'#0099B8'} },
     lime:    { dark:{a:'#B6FF3C',b:'#00E5FF'}, light:{a:'#5C8F1A',b:'#0099B8'} },
   };
   function applyTheme(t){
