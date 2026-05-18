@@ -84,7 +84,10 @@ window.HardwareSequence = function(opts){
   const fps = opts.fps || 30;
   const startDelayMs = opts.startDelayMs != null ? opts.startDelayMs : 1500;
   const ctx = canvas.getContext('2d', {alpha:true, desynchronized:true});
-  const dpr = Math.min(2, window.devicePixelRatio||1);
+  // Allow up to 3× DPR for sharp rendering on high-res/retina displays
+  const dpr = Math.min(3, window.devicePixelRatio||1);
+  // Bitmaps decoded off-main-thread for smooth playback; fall back to Image
+  const useBitmap = typeof createImageBitmap === 'function';
   const imgs = new Array(total);
   let loaded = 0;
   let ready = false;
@@ -102,22 +105,30 @@ window.HardwareSequence = function(opts){
     const r = canvas.getBoundingClientRect();
     canvas.width = Math.round(r.width*dpr);
     canvas.height = Math.round(r.height*dpr);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     if(lastDrawn >= 0) drawIdx(lastDrawn);
   }
   resize();
   new ResizeObserver(resize).observe(canvas);
 
   function isLoaded(i){
-    const img = imgs[i];
-    return img && img.complete && img.naturalWidth > 0;
+    const b = imgs[i];
+    if(!b) return false;
+    if(useBitmap) return b instanceof ImageBitmap;
+    return b.complete && b.naturalWidth > 0;
   }
 
   function drawIdx(i){
     const img = imgs[i];
     if(!isLoaded(i)) return;
     const w = canvas.width, h = canvas.height;
+    const iw = useBitmap ? img.width : img.naturalWidth;
+    const ih = useBitmap ? img.height : img.naturalHeight;
     ctx.clearRect(0,0,w,h);
-    const ir = img.width/img.height;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const ir = iw/ih;
     const cr = w/h;
     let dw, dh, dx, dy;
     if(ir>cr){ dh=h; dw=h*ir; dx=(w-dw)/2; dy=0; }
@@ -128,9 +139,8 @@ window.HardwareSequence = function(opts){
 
   function loop(t){
     if(!lastT) lastT = t;
-    const dt = t - lastT;
+    const dt = Math.min(t - lastT, 100); // clamp large dt spikes (tab switch etc.)
     lastT = t;
-    // Activate playback once startDelayMs elapsed AND at least the first frame is up
     if(!ready && (t - t0) >= startDelayMs && isLoaded(0)){
       ready = true;
       if(opts.onStart) opts.onStart();
@@ -142,7 +152,6 @@ window.HardwareSequence = function(opts){
         current = (current + 1) % total;
         acc -= frameMs;
       }
-      // Draw available frame; if not yet loaded, hold previous (no stutter)
       if(isLoaded(current)) drawIdx(current);
     }
     requestAnimationFrame(loop);
@@ -150,38 +159,43 @@ window.HardwareSequence = function(opts){
 
   function loadOne(i){
     return new Promise(resolve=>{
-      const im = new Image();
-      im.decoding = 'async';
-      im.loading  = 'eager';
-      im.onload = async ()=>{
-        // Pre-decode so first draw doesn't stutter the main thread
-        try { if (im.decode) await im.decode(); } catch(e){}
-        loaded++;
-        if(i===0 && lastDrawn < 0) drawIdx(0);
-        resolve();
-      };
-      im.onerror = ()=>{ loaded++; resolve(); };
-      im.src = path + pad(i+1) + '.jpg';
-      imgs[i] = im;
+      const url = path + pad(i+1) + '.jpg';
+      if(useBitmap){
+        fetch(url)
+          .then(r=>r.blob())
+          .then(b=>createImageBitmap(b,{resizeQuality:'high'}))
+          .then(bmp=>{ imgs[i]=bmp; loaded++; if(i===0 && lastDrawn<0) drawIdx(0); resolve(); })
+          .catch(()=>{ loaded++; resolve(); });
+      } else {
+        const im = new Image();
+        im.decoding = 'async';
+        im.loading  = 'eager';
+        im.onload = async ()=>{
+          try { if(im.decode) await im.decode(); } catch(e){}
+          imgs[i]=im; loaded++;
+          if(i===0 && lastDrawn<0) drawIdx(0);
+          resolve();
+        };
+        im.onerror = ()=>{ loaded++; resolve(); };
+        im.src = url;
+      }
     });
   }
 
   async function preloadStream(){
-    // Frame 0 first — instant first paint
     await loadOne(0);
 
-    // Priority burst: frames 1..30 (first second of playback) load in parallel right away
+    // Larger burst — 60 frames (2s of playback) loaded before looping begins
     const burst = [];
-    for(let i=1; i<Math.min(31, total); i++) burst.push(loadOne(i));
+    for(let i=1; i<Math.min(61, total); i++) burst.push(loadOne(i));
     await Promise.all(burst);
 
-    // Remaining frames stream in fatter parallel batches (no awaits between batches)
-    const batchSize = 32;
+    // Stream the rest in parallel batches; RAF picks them up as they arrive
+    const batchSize = 40;
     const pending = [];
-    for(let i=31; i<total; i++) pending.push(loadOne(i));
-    // Don't await — let RAF loop pick them up as they arrive
+    for(let i=61; i<total; i++) pending.push(loadOne(i));
     for(let i=0;i<pending.length;i+=batchSize){
-      Promise.all(pending.slice(i,i+batchSize)); // fire and forget
+      Promise.all(pending.slice(i,i+batchSize));
     }
     Promise.all(pending).then(()=>{ if(opts.onReady) opts.onReady(); });
   }

@@ -208,13 +208,10 @@ body::before{
   -webkit-mask-image:radial-gradient(ellipse 95% 80% at 50% 50%,#000 50%,rgba(0,0,0,.65) 75%,rgba(0,0,0,0) 100%);
           mask-image:radial-gradient(ellipse 95% 80% at 50% 50%,#000 50%,rgba(0,0,0,.65) 75%,rgba(0,0,0,0) 100%);
 }
-/* Dark mode keeps default rendering — punchy as-is */
-[data-theme="dark"] .hero-anim canvas{filter:contrast(1.05) saturate(1.1)}
-
-/* Light mode hero is its own dark stage — render canvas with same premium look as dark mode */
-[data-theme="light"] .hero-anim canvas{
-  filter:contrast(1.08) saturate(1.18);
-}
+/* Sharpen + boost the upscaled 720p frames */
+.hero-anim canvas{image-rendering:high-quality}
+[data-theme="dark"] .hero-anim canvas{filter:contrast(1.08) saturate(1.15) brightness(1.02)}
+[data-theme="light"] .hero-anim canvas{filter:contrast(1.12) saturate(1.20) brightness(1.02)}
 .hero-video-overlay{
   position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
